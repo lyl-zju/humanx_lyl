@@ -12,6 +12,7 @@ env:
       terminate_by_contact: False #False #terminate_after_contacts_on : ["pelvis", "hip_pitch", "knee"]
       terminate_by_contact_p: 1.0
       terminate_by_gravity: True
+      gravity_mode: absolute  # absolute or reference
       terminate_by_low_height: False
       terminate_when_motion_end: True
       terminate_when_motion_far: True
@@ -38,6 +39,7 @@ env:
       termination_min_base_height : 0.2
       termination_gravity_x : 0.8
       termination_gravity_y : 0.8
+      gravity_reference_threshold_deg: 60.0
       termination_motion_far_threshold : 1.5
       termination_close_to_dof_pos_limit : 0.98
       termination_close_to_dof_vel_limit : 0.98

@@ -586,6 +586,11 @@ class LeggedRobotBase(BaseTask):
         self._update_reset_buf()
         self._update_timeout_buf()
 
+    def _gravity_termination_mask(self):
+        scales = self.config.termination_scales
+        gravity_x, gravity_y = self.projected_gravity[:, :2].abs().unbind(dim=-1)
+        return (gravity_x > scales.termination_gravity_x) | (gravity_y > scales.termination_gravity_y)
+
     def _update_reset_buf(self):
         if self.config.termination.terminate_by_contact:
             reset_buf_contact = torch.any(
@@ -613,14 +618,7 @@ class LeggedRobotBase(BaseTask):
             )
 
         if self.config.termination.terminate_by_gravity:
-            # print(self.projected_gravity)
-            gravity_mask = torch.any(
-                torch.abs(self.projected_gravity[:, 0:1]) > self.config.termination_scales.termination_gravity_x,
-                dim=1,
-            ) | torch.any(
-                torch.abs(self.projected_gravity[:, 1:2]) > self.config.termination_scales.termination_gravity_y,
-                dim=1,
-            )
+            gravity_mask = self._gravity_termination_mask()
             self.reset_buf, self.time_out_buf, _ = apply_termination_mask(
                 self.log_dict, self.reset_buf, self.time_out_buf, "gravity", gravity_mask
             )

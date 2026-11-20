@@ -1,4 +1,5 @@
 from isaacgym import gymtorch, gymapi, gymutil
+import math
 import torch
 import numpy as np
 from pathlib import Path
@@ -120,6 +121,16 @@ class LeggedRobotMotionTrackingHOI(LeggedRobotBase):
     def __init__(self, config, device):
         self.init_done = False
         self.debug_viz = True #False
+
+        gravity_mode = getattr(config.termination, "gravity_mode", "absolute")
+        if gravity_mode not in ("absolute", "reference"):
+            raise ValueError(f"Unknown gravity termination mode: {gravity_mode!r}")
+        self._gravity_reference_cos_threshold = None
+        if gravity_mode == "reference":
+            threshold_deg = float(getattr(config.termination_scales, "gravity_reference_threshold_deg", 60.0))
+            if not 0.0 < threshold_deg < 180.0:
+                raise ValueError("Gravity reference threshold must be between 0 and 180 degrees")
+            self._gravity_reference_cos_threshold = math.cos(math.radians(threshold_deg))
         
         # Early init for packet loss flag (needed before super().__init__ calls _setup_robot_body_indices)
         pl_cfg = getattr(config, "packet_loss", None)
@@ -984,6 +995,15 @@ class LeggedRobotMotionTrackingHOI(LeggedRobotBase):
         super().set_is_evaluating()
         # track per-env ball apex during evaluation
         self._ball_max_z = torch.full((self.num_envs,), -1e9, device=self.device)
+
+    def _gravity_termination_mask(self):
+        if self._gravity_reference_cos_threshold is None:
+            return super()._gravity_termination_mask()
+
+        # Use the same reference root target as the HOI tracking terms and ignore world yaw.
+        reference_gravity = quat_rotate_inverse(self.ref_root_rot, self.gravity_vec, w_last=True)
+        tilt_cosine = (self.projected_gravity * reference_gravity).sum(dim=-1)
+        return tilt_cosine < self._gravity_reference_cos_threshold
 
     def _check_termination(self):
         if self._visualize_motion_data_only:

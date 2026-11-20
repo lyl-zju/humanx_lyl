@@ -115,6 +115,17 @@ python humanoidverse/train_agent.py \
   env.config.init_noise_scale.obj_pos=0.1
 ```
 
+For motions with deep bends, add these overrides to compare the simulated
+pelvis tilt with its tracking target. The reference mode ignores yaw and resets
+when the angle between their local gravity vectors exceeds the threshold in
+degrees. The default `absolute` mode uses the local X and Y gravity components
+with thresholds of 0.8.
+
+```text
+env.config.termination.gravity_mode=reference
+env.config.termination_scales.gravity_reference_threshold_deg=60
+```
+
 For the AMP teacher configuration, replace the experiment and observation
 overrides with:
 
