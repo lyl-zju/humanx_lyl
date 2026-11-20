@@ -2,11 +2,6 @@ docs/superpowers
 runs/
 logs/
 logs_eval/
-data/*
-!data/motions/
-data/motions/*
-!data/motions/example/
-!data/motions/example/**
 
 *.egg-info/
 __pycache__/
